@@ -1,0 +1,68 @@
+esphome:
+  name: "m5-atom-matrix"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable over the air (wireless) updates 
+ota:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: my-ssid
+    password: my-password
+
+captive_portal:
+
+# Declare the LED matrix as a FastLED addressable light.
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B
+    pin: 27
+    num_leds: 25
+    rgb_order: GRB
+    name: "led_matrix"
+    id: led_matrix_light
+    default_transition_length: .25s
+    color_correct: [50%, 50%, 50%]
+    restore_mode: ALWAYS_ON
+    effects:
+      - addressable_rainbow:
+          name: Rainbow Effect With Custom Values
+          speed: 10
+          width: 50
+
+# This is NOT the button on the side. If you put the Atom Matrix on its back (LEDs up) on a 
+# flat service and gently compress the screen with your finger, it clicks. That's this button.
+# Thanks to TotallyInformation for getting me pointed in the right direction with this thread:
+# https://community.home-assistant.io/t/example-m5stack-atom-matrix-with-led-matrix-effect-no-home-assistant/298419
+binary_sensor:
+  - platform: gpio
+    name: led_matrix_button
+    pin:
+      number: 39
+      mode:
+        input: true
+    on_press:
+      then:
+        - if:
+            condition:
+              - light.is_on: led_matrix_light
+            then:
+              - light.turn_off: led_matrix_light
+            else:
+              - light.turn_on:
+                  id: led_matrix_light
+                  effect: Rainbow Effect With Custom Values
